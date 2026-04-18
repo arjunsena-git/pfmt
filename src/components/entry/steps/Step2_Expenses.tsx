@@ -58,7 +58,8 @@ export function Step2_Expenses({ data, onUpdate }: Props) {
         ? { ...item, actualAmount: paise, isOverridden: paise !== item.defaultAmount }
         : item
     );
-    const total = items.reduce((sum, i) => sum + i.actualAmount, 0);
+    const loanTotal = (expenses.loanRepayments ?? []).reduce((s, r) => s + r.amount, 0);
+    const total = items.reduce((sum, i) => sum + i.actualAmount, 0) + loanTotal;
     onUpdate({
       expenses: { ...expenses, items, totalExpenses: total } as ExpensesSection,
     });
@@ -102,7 +103,8 @@ export function Step2_Expenses({ data, onUpdate }: Props) {
 
   const removeCustom = (id: string) => {
     const items = expenses.items.filter((i) => i.id !== id);
-    const total = items.reduce((sum, i) => sum + i.actualAmount, 0);
+    const loanTotal = (expenses.loanRepayments ?? []).reduce((s, r) => s + r.amount, 0);
+    const total = items.reduce((sum, i) => sum + i.actualAmount, 0) + loanTotal;
     onUpdate({ expenses: { ...expenses, items, totalExpenses: total } as ExpensesSection });
   };
 
@@ -121,7 +123,8 @@ export function Step2_Expenses({ data, onUpdate }: Props) {
     };
     const loanRepayments = [...(expenses.loanRepayments ?? []), newRepayment];
     const totalLoanRepayments = loanRepayments.reduce((s, r) => s + r.amount, 0);
-    onUpdate({ expenses: { ...expenses, loanRepayments, totalLoanRepayments } as ExpensesSection });
+    const itemsTotal = expenses.items.reduce((s, i) => s + i.actualAmount, 0);
+    onUpdate({ expenses: { ...expenses, loanRepayments, totalLoanRepayments, totalExpenses: itemsTotal + totalLoanRepayments } as ExpensesSection });
     setRepaymentAmount(0);
     setRepaymentNote("");
   };
@@ -129,11 +132,12 @@ export function Step2_Expenses({ data, onUpdate }: Props) {
   const removeRepayment = (id: string) => {
     const loanRepayments = (expenses.loanRepayments ?? []).filter((r) => r.id !== id);
     const totalLoanRepayments = loanRepayments.reduce((s, r) => s + r.amount, 0);
-    onUpdate({ expenses: { ...expenses, loanRepayments, totalLoanRepayments } as ExpensesSection });
+    const itemsTotal = expenses.items.reduce((s, i) => s + i.actualAmount, 0);
+    onUpdate({ expenses: { ...expenses, loanRepayments, totalLoanRepayments, totalExpenses: itemsTotal + totalLoanRepayments } as ExpensesSection });
   };
 
-  const totalExpenses = expenses.items.reduce((sum, i) => sum + i.actualAmount, 0);
   const totalLoanRepayments = (expenses.loanRepayments ?? []).reduce((s, r) => s + r.amount, 0);
+  const totalExpenses = expenses.items.reduce((sum, i) => sum + i.actualAmount, 0) + totalLoanRepayments;
 
   return (
     <div className="space-y-6 px-4 sm:px-6 pb-6">
