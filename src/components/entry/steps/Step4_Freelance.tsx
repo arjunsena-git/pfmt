@@ -19,7 +19,7 @@ export function Step4_Freelance({ data, onUpdate, defaultSources = [] }: Props) 
 
   const income = data.income ?? {} as IncomeSection;
   const savings = data.savings ?? { fromSalary: [], fromFreelance: [], totalFromSalary: 0, totalFromFreelance: 0, totalSavings: 0 };
-  const expenses = data.expenses ?? { items: [], freelanceExpenses: [], totalExpenses: 0, totalFreelanceExpenses: 0 };
+  const expenses = data.expenses ?? { items: [], freelanceExpenses: [], loanRepayments: [], totalExpenses: 0, totalFreelanceExpenses: 0, totalLoanRepayments: 0 };
 
   const lineItems = income.freelanceItems ?? [];
   const freelanceExpenses = expenses.freelanceExpenses ?? [];
