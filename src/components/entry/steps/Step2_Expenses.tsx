@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import type { MonthlyEntry, ExpensesSection, ExpenseItem, CreditCardEMI } from "@/types/finance";
+import type { MonthlyEntry, ExpensesSection, ExpenseItem, CreditCardEMI, LoanRecord, LoanRepaymentItem } from "@/types/finance";
 import { OverrideRow } from "../OverrideRow";
+import { CurrencyInput } from "../CurrencyInput";
 import { formatINR, formatINRCompact, generateId } from "@/lib/utils";
 import { getSettings } from "@/lib/db/queries";
 import { emiStats } from "@/components/settings/CreditCardEMIs";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -24,11 +25,32 @@ function activeEmiNote(emis: CreditCardEMI[], bank: "axis" | "icici"): string | 
 export function Step2_Expenses({ data, onUpdate }: Props) {
   const [newLabel, setNewLabel] = useState("");
   const [ccEmis, setCcEmis] = useState<CreditCardEMI[]>([]);
+  const [loans, setLoans] = useState<LoanRecord[]>([]);
+
+  // New repayment form state
+  const [selectedLoanId, setSelectedLoanId] = useState("");
+  const [repaymentAmount, setRepaymentAmount] = useState(0);
+  const [repaymentDate, setRepaymentDate] = useState(new Date().toISOString().slice(0, 10));
+  const [repaymentNote, setRepaymentNote] = useState("");
 
   useEffect(() => {
-    getSettings().then((s) => setCcEmis(s.creditCardEMIs ?? []));
+    getSettings().then((s) => {
+      setCcEmis(s.creditCardEMIs ?? []);
+      const ls = s.loans ?? [];
+      setLoans(ls);
+      if (ls.length > 0 && !selectedLoanId) setSelectedLoanId(ls[0].id);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const expenses = data.expenses ?? { items: [], freelanceExpenses: [], totalExpenses: 0, totalFreelanceExpenses: 0 };
+
+  const expenses = data.expenses ?? {
+    items: [],
+    freelanceExpenses: [],
+    loanRepayments: [],
+    totalExpenses: 0,
+    totalFreelanceExpenses: 0,
+    totalLoanRepayments: 0,
+  };
 
   const updateItem = (id: string, paise: number) => {
     const items = expenses.items.map((item) =>
@@ -84,7 +106,34 @@ export function Step2_Expenses({ data, onUpdate }: Props) {
     onUpdate({ expenses: { ...expenses, items, totalExpenses: total } as ExpensesSection });
   };
 
+  // Loan repayment handlers
+  const addRepayment = () => {
+    if (!selectedLoanId || repaymentAmount <= 0) return;
+    const loan = loans.find((l) => l.id === selectedLoanId);
+    if (!loan) return;
+    const newRepayment: LoanRepaymentItem = {
+      id: generateId(),
+      loanId: selectedLoanId,
+      lenderName: loan.lenderName,
+      amount: repaymentAmount,
+      date: repaymentDate,
+      note: repaymentNote.trim() || undefined,
+    };
+    const loanRepayments = [...(expenses.loanRepayments ?? []), newRepayment];
+    const totalLoanRepayments = loanRepayments.reduce((s, r) => s + r.amount, 0);
+    onUpdate({ expenses: { ...expenses, loanRepayments, totalLoanRepayments } as ExpensesSection });
+    setRepaymentAmount(0);
+    setRepaymentNote("");
+  };
+
+  const removeRepayment = (id: string) => {
+    const loanRepayments = (expenses.loanRepayments ?? []).filter((r) => r.id !== id);
+    const totalLoanRepayments = loanRepayments.reduce((s, r) => s + r.amount, 0);
+    onUpdate({ expenses: { ...expenses, loanRepayments, totalLoanRepayments } as ExpensesSection });
+  };
+
   const totalExpenses = expenses.items.reduce((sum, i) => sum + i.actualAmount, 0);
+  const totalLoanRepayments = (expenses.loanRepayments ?? []).reduce((s, r) => s + r.amount, 0);
 
   return (
     <div className="space-y-6 px-4 sm:px-6 pb-6">
@@ -147,6 +196,96 @@ export function Step2_Expenses({ data, onUpdate }: Props) {
           <Plus className="w-4 h-4" />
         </Button>
       </div>
+
+      {/* Loan Repayments */}
+      {loans.length > 0 && (
+        <div className="rounded-xl border border-border overflow-hidden">
+          <div className="px-3 sm:px-4 py-2 bg-muted/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Loan Repayments
+          </div>
+
+          {/* Existing repayments */}
+          {(expenses.loanRepayments ?? []).length > 0 && (
+            <div className="divide-y divide-border/40">
+              {(expenses.loanRepayments ?? []).map((r) => (
+                <div key={r.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{r.lenderName}</p>
+                    <p className="text-xs text-muted-foreground">{r.date}{r.note ? ` · ${r.note}` : ""}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-sm font-semibold text-orange-600">{formatINR(r.amount)}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeRepayment(r.id)}
+                      className="p-1 text-muted-foreground/50 hover:text-destructive transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add repayment form */}
+          <div className="px-4 py-4 space-y-3 border-t border-border/40 bg-muted/10">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Record Repayment</p>
+            <select
+              value={selectedLoanId}
+              onChange={(e) => setSelectedLoanId(e.target.value)}
+              className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {loans.map((l) => (
+                <option key={l.id} value={l.id}>{l.lenderName}</option>
+              ))}
+            </select>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Amount</label>
+                <CurrencyInput
+                  value={repaymentAmount}
+                  onChange={setRepaymentAmount}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Date</label>
+                <input
+                  type="date"
+                  value={repaymentDate}
+                  onChange={(e) => setRepaymentDate(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+            <input
+              type="text"
+              value={repaymentNote}
+              onChange={(e) => setRepaymentNote(e.target.value)}
+              placeholder="Note (optional)"
+              className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <Button
+              type="button"
+              onClick={addRepayment}
+              disabled={!selectedLoanId || repaymentAmount <= 0}
+              className="w-full"
+              variant="outline"
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              Add Repayment
+            </Button>
+          </div>
+
+          {totalLoanRepayments > 0 && (
+            <div className="px-4 py-2 bg-muted/20 flex justify-between items-center border-t border-border/40">
+              <span className="text-xs text-muted-foreground">Total repaid this month</span>
+              <span className="text-sm font-semibold text-orange-600">{formatINR(totalLoanRepayments)}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Total */}
       <div className="bg-destructive/5 rounded-xl p-4 flex justify-between items-center">

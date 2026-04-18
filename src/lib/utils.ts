@@ -154,6 +154,8 @@ export function recomputeEntry(entry: Partial<MonthlyEntry>): Partial<MonthlyEnt
     entry.expenses.items?.reduce((sum, item) => sum + item.actualAmount, 0) ?? 0;
   const totalFreelanceExpenses =
     entry.expenses.freelanceExpenses?.reduce((sum, item) => sum + item.amount, 0) ?? 0;
+  const totalLoanRepayments =
+    entry.expenses.loanRepayments?.reduce((sum, item) => sum + item.amount, 0) ?? 0;
 
   // Recompute savings totals
   const totalFromSalary =
@@ -166,6 +168,7 @@ export function recomputeEntry(entry: Partial<MonthlyEntry>): Partial<MonthlyEnt
     ...entry.expenses,
     totalExpenses,
     totalFreelanceExpenses,
+    totalLoanRepayments,
   };
   const updatedSavings = {
     ...entry.savings,

@@ -59,11 +59,22 @@ export interface FreelanceExpenseItem {
   note?: string;
 }
 
+export interface LoanRepaymentItem {
+  id: string;
+  loanId: string; // references LoanRecord.id in AppSettings
+  lenderName: string; // denormalized for display
+  amount: number; // paise
+  date: string; // ISO date "2026-04-30"
+  note?: string;
+}
+
 export interface ExpensesSection {
   items: ExpenseItem[];
   freelanceExpenses: FreelanceExpenseItem[];
+  loanRepayments: LoanRepaymentItem[];
   totalExpenses: number; // paise
   totalFreelanceExpenses: number; // paise
+  totalLoanRepayments: number; // paise — tracked separately, not in totalExpenses
 }
 
 // ─── Savings / Investments ─────────────────────────────────────────────────
@@ -145,6 +156,16 @@ export interface MonthlyEntry {
   syncStatus: SyncStatus;
 }
 
+// ─── Loans ─────────────────────────────────────────────────────────────────
+
+export interface LoanRecord {
+  id: string;
+  lenderName: string; // "SBI", "Friend Ravi", etc.
+  amountBorrowed: number; // paise
+  dateBorrowed: string; // ISO date "2026-04-01"
+  notes?: string;
+}
+
 // ─── Credit Card EMIs ──────────────────────────────────────────────────────
 
 export type CCBank = "axis" | "icici";
@@ -211,6 +232,7 @@ export interface AppSettings {
   defaultFreelanceSources: string[];
   defaultFreelanceExpenses: DefaultFreelanceExpenseConfig[];
   creditCardEMIs: CreditCardEMI[];
+  loans: LoanRecord[];
   googleSheetId?: string;
   googleDriveFolderId?: string;
   theme: "light" | "dark" | "system";
