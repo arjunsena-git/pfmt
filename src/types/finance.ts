@@ -46,6 +46,7 @@ export interface ExpenseItem {
   actualAmount: number; // paise
   isOverridden: boolean;
   isPaid?: boolean;
+  paidDate?: string; // ISO date "2026-04-15" — when the expense was paid
   frequency: "monthly" | "annual" | "variable";
   category: ExpenseCategory;
   note?: string;

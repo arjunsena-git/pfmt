@@ -1,9 +1,8 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import type { MonthlyEntry, ExpensesSection, ExpenseItem, CreditCardEMI } from "@/types/finance";
 import { OverrideRow } from "../OverrideRow";
-import { CurrencyInput } from "../CurrencyInput";
-import { formatINR, formatINRCompact, generateId, getMonthId } from "@/lib/utils";
+import { formatINR, formatINRCompact, generateId } from "@/lib/utils";
 import { getSettings } from "@/lib/db/queries";
 import { emiStats } from "@/components/settings/CreditCardEMIs";
 import { Plus } from "lucide-react";
@@ -44,8 +43,21 @@ export function Step2_Expenses({ data, onUpdate }: Props) {
   };
 
   const togglePaid = (id: string) => {
+    const items = expenses.items.map((item) => {
+      if (item.id !== id) return item;
+      const nowPaid = !item.isPaid;
+      return {
+        ...item,
+        isPaid: nowPaid,
+        paidDate: nowPaid ? (item.paidDate ?? new Date().toISOString().slice(0, 10)) : undefined,
+      };
+    });
+    onUpdate({ expenses: { ...expenses, items } as ExpensesSection });
+  };
+
+  const updateDate = (id: string, date: string) => {
     const items = expenses.items.map((item) =>
-      item.id === id ? { ...item, isPaid: !item.isPaid } : item
+      item.id === id ? { ...item, paidDate: date || undefined } : item
     );
     onUpdate({ expenses: { ...expenses, items } as ExpensesSection });
   };
@@ -110,7 +122,9 @@ export function Step2_Expenses({ data, onUpdate }: Props) {
                 isOverridden={item.isOverridden}
                 onChange={(v) => updateItem(item.id, v)}
                 isPaid={item.isPaid}
+                paidDate={item.paidDate}
                 onTogglePaid={() => togglePaid(item.id)}
+                onDateChange={(d) => updateDate(item.id, d)}
                 onRemove={() => removeCustom(item.id)}
                 subLabel={subLabel}
               />
