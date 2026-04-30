@@ -41,8 +41,10 @@ function buildDefaultEntry(monthId: string): Partial<MonthlyEntry> {
         label: d.label,
         amount: d.defaultAmount,
       })),
+      loanRepayments: [],
       totalExpenses: DEFAULT_EXPENSES.reduce((s, d) => s + d.defaultAmount, 0),
       totalFreelanceExpenses: DEFAULT_FREELANCE_EXPENSES.reduce((s, d) => s + d.defaultAmount, 0),
+      totalLoanRepayments: 0,
     } as ExpensesSection,
     savings: {
       fromSalary: DEFAULT_SAVINGS.map((d) => ({
@@ -132,9 +134,10 @@ export function useMonthEntry(initialMonthId?: string) {
     try {
       const recomputed = recomputeEntry(data);
       const now = new Date().toISOString();
+      const effectiveMonthId = (data.id ?? monthId) as string;
       const entry: MonthlyEntry = {
         ...(recomputed as MonthlyEntry),
-        id: monthId,
+        id: effectiveMonthId,
         createdAt: data.createdAt ?? now,
         updatedAt: now,
         version: 1,
