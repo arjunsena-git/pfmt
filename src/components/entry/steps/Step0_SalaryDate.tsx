@@ -22,7 +22,12 @@ export function Step0_SalaryDate({ data, onUpdate }: Props) {
     });
   };
 
-  const recentMonths = getRecentMonthIds(18);
+  const futureMonths = Array.from({ length: 3 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + i + 1);
+    return getMonthId(d);
+  });
+  const recentMonths = [...futureMonths, ...getRecentMonthIds(18)];
 
   return (
     <div className="space-y-6">
