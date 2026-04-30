@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useMonthHistory } from "@/hooks/useMonthHistory";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
@@ -13,10 +13,19 @@ export default function DashboardPage() {
   const { entries, isLoading } = useMonthHistory();
   const [selectedMonthId, setSelectedMonthId] = useState(getMonthId());
 
+  // Once entries load, jump to the most recent one if current month has no entry
+  useEffect(() => {
+    if (!isLoading && entries.length > 0 && !entries.find((e) => e.id === selectedMonthId)) {
+      setSelectedMonthId(entries[0].id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
   const entry = entries.find((e) => e.id === selectedMonthId);
   const prevEntry = entries.find((e) => e.id === getPrevMonthId(selectedMonthId));
 
-  const canGoNext = selectedMonthId < getMonthId();
+  const maxMonthId = (() => { const d = new Date(); d.setMonth(d.getMonth() + 3); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; })();
+  const canGoNext = selectedMonthId < maxMonthId;
   const canGoPrev = entries.some((e) => e.id < selectedMonthId);
 
   const prevMonth = () => {
