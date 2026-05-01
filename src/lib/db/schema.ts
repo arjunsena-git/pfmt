@@ -76,5 +76,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultFreelanceExpenses: DEFAULT_FREELANCE_EXPENSES,
   creditCardEMIs: [],
   loans: [],
+  subscriptions: [],
   theme: "system",
 };

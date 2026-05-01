@@ -182,6 +182,20 @@ export interface CreditCardEMI {
   closedEarly?: boolean; // manually marked as paid off
 }
 
+// ─── Subscriptions ────────────────────────────────────────────────────────
+
+export type SubscriptionBillingCycle = "monthly" | "annual";
+
+export interface Subscription {
+  id: string;
+  name: string; // e.g. "OpenAI", "Netflix"
+  amount: number; // paise — per billing cycle
+  billingCycle: SubscriptionBillingCycle;
+  startDate?: string; // ISO date
+  notes?: string;
+  isActive: boolean;
+}
+
 // ─── User Profile ─────────────────────────────────────────────────────────
 
 export interface BankConfig {
@@ -233,6 +247,7 @@ export interface AppSettings {
   defaultFreelanceExpenses: DefaultFreelanceExpenseConfig[];
   creditCardEMIs: CreditCardEMI[];
   loans: LoanRecord[];
+  subscriptions: Subscription[];
   googleSheetId?: string;
   googleDriveFolderId?: string;
   theme: "light" | "dark" | "system";

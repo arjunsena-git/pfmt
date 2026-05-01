@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { PushSetup } from "@/components/notifications/PushSetup";
 import { CreditCardEMIs } from "@/components/settings/CreditCardEMIs";
+import { Subscriptions } from "@/components/settings/Subscriptions";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
@@ -368,6 +369,15 @@ export default function SettingsPage() {
           <p className="text-sm text-muted-foreground mt-0.5">Track running EMIs on your credit cards.</p>
         </div>
         <CreditCardEMIs settings={settings} onUpdate={setSettings} />
+      </div>
+
+      {/* ── Subscriptions ───────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+        <div>
+          <h2 className="font-semibold">Subscriptions</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Track recurring subscriptions — OpenAI, Anthropic, Netflix, and more.</p>
+        </div>
+        <Subscriptions settings={settings} onUpdate={setSettings} />
       </div>
 
       {/* ── Reminders ───────────────────────────────────────────────────── */}
